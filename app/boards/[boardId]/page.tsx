@@ -1,8 +1,9 @@
-import { getBoardById, getColumnsByBoardId } from '@/lib/data';
+import { getBoardById, getColumnsByBoardId, getCardsByColumnId } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DraggableBoard } from '@/components/draggable-board';
 
 interface BoardPageProps {
   params: Promise<{ boardId: string }>;
@@ -17,6 +18,14 @@ export default async function BoardPage({ params }: BoardPageProps) {
   }
   
   const columns = await getColumnsByBoardId(boardId);
+  
+  // 各カラムのカードを取得
+  const columnsWithCards = await Promise.all(
+    columns.map(async (column) => {
+      const cards = await getCardsByColumnId(column.id);
+      return { ...column, cards };
+    })
+  );
   
   return (
     <div className="min-h-screen p-8">
@@ -36,22 +45,9 @@ export default async function BoardPage({ params }: BoardPageProps) {
           </div>
         </div>
         
-        <div className="flex gap-6 overflow-x-auto">
-          {columns.map((column) => (
-            <div key={column.id} className="flex-shrink-0 w-80">
-              <div className="bg-gray-100 rounded-lg p-4">
-                <h2 className="font-semibold text-lg mb-4">{column.title}</h2>
-                <div className="space-y-3">
-                  <div className="text-center py-8 text-gray-500 text-sm">
-                    カードはまだありません
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <DraggableBoard board={board} initialColumnsWithCards={columnsWithCards} />
         
-        {columns.length === 0 && (
+        {columnsWithCards.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">このボードにはまだカラムがありません</p>
           </div>

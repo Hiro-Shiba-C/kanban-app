@@ -70,5 +70,23 @@
     "boardId": "ubcx25zog19mc6ixvfz",
     "order": 2,
     "id": "33t1o6nbs5qmc6ixvn8"
+  },
+  {
+    "title": "To Do",
+    "boardId": "oscbwg8jkbmc6knyzu",
+    "order": 0,
+    "id": "3dwjj10sjbtmc6knz0n"
+  },
+  {
+    "title": "In Progress",
+    "boardId": "oscbwg8jkbmc6knyzu",
+    "order": 1,
+    "id": "piocqkm6upcmc6knz33"
+  },
+  {
+    "title": "Done",
+    "boardId": "oscbwg8jkbmc6knyzu",
+    "order": 2,
+    "id": "vfzcd6a9wlmc6knz3r"
   }
 ]
