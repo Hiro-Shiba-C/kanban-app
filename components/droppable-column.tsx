@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Column, Card as CardType } from '@/lib/types';
 import { DraggableCard } from './draggable-card';
 import { AddTaskButton } from './add-task-button';
-import { cn } from '@/lib/utils';
+import { cn, isOverdue } from '@/lib/utils';
 
 interface DroppableColumnProps {
   column: Column;
@@ -22,6 +22,8 @@ export function DroppableColumn({ column, cards, boardId }: DroppableColumnProps
     },
   });
 
+  const overdueCount = cards.filter(card => card.dueDate && isOverdue(card.dueDate)).length;
+
   return (
     <div className="flex-shrink-0 w-80">
       <div
@@ -31,7 +33,14 @@ export function DroppableColumn({ column, cards, boardId }: DroppableColumnProps
           isOver && 'bg-blue-50 ring-2 ring-blue-300'
         )}
       >
-        <h2 className="font-semibold text-lg mb-4">{column.title}</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-lg">{column.title}</h2>
+          {overdueCount > 0 && (
+            <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+              期限切れ {overdueCount}件
+            </div>
+          )}
+        </div>
         
         <SortableContext items={cards.map(card => card.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3 mb-4 min-h-[100px]">

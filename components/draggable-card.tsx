@@ -3,8 +3,8 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card as CardType, Priority } from '@/lib/types';
-import { Calendar, Flag } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Calendar, Flag, AlertTriangle } from 'lucide-react';
+import { cn, isOverdue, getOverdueDays, formatOverdueText } from '@/lib/utils';
 
 interface DraggableCardProps {
   card: CardType;
@@ -45,6 +45,9 @@ export function DraggableCard({ card }: DraggableCardProps) {
     transition,
   };
 
+  const isCardOverdue = card.dueDate ? isOverdue(card.dueDate) : false;
+  const overdueDays = isCardOverdue ? getOverdueDays(card.dueDate!) : 0;
+
   return (
     <div
       ref={setNodeRef}
@@ -52,9 +55,10 @@ export function DraggableCard({ card }: DraggableCardProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        'bg-white rounded-lg p-3 shadow-sm border cursor-grab',
+        'bg-white rounded-lg p-3 shadow-sm cursor-grab',
         'hover:shadow-md transition-shadow duration-200',
-        isDragging && 'opacity-50 shadow-lg scale-105'
+        isDragging && 'opacity-50 shadow-lg scale-105',
+        isCardOverdue ? 'border-2 border-red-500 bg-red-50' : 'border'
       )}
     >
       <h3 className="font-medium mb-2">{card.title}</h3>
@@ -69,9 +73,21 @@ export function DraggableCard({ card }: DraggableCardProps) {
           </span>
         </div>
         {card.dueDate && (
-          <div className="flex items-center gap-1 text-gray-500">
-            <Calendar className="h-3 w-3" />
-            <span>{new Date(card.dueDate).toLocaleDateString('ja-JP')}</span>
+          <div className={cn(
+            "flex items-center gap-1",
+            isCardOverdue ? "text-red-600" : "text-gray-500"
+          )}>
+            {isCardOverdue ? (
+              <AlertTriangle className="h-3 w-3" />
+            ) : (
+              <Calendar className="h-3 w-3" />
+            )}
+            <span>
+              {isCardOverdue 
+                ? formatOverdueText(overdueDays)
+                : new Date(card.dueDate).toLocaleDateString('ja-JP')
+              }
+            </span>
           </div>
         )}
       </div>
