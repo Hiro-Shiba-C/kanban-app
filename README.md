@@ -44,6 +44,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - **Drag & Drop**: @dnd-kit
 - **Icons**: Lucide React
 - **Data Storage**: JSON files with Server Actions
+- **Deployment**: Ready for Vercel deployment
 
 ## Learn More
 
