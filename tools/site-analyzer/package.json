@@ -1,0 +1,28 @@
+{
+  "name": "site-analyzer",
+  "version": "1.0.0",
+  "description": "サイト構造解析ツール",
+  "main": "dist/cli.js",
+  "bin": {
+    "site-analyzer": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "analyze": "npm run build && node dist/cli.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "ts-morph": "^23.0.0",
+    "glob": "^10.4.5",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "inquirer": "^8.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.44",
+    "@types/inquirer": "^8.2.10",
+    "typescript": "^5.8.3",
+    "ts-node": "^10.9.2"
+  }
+}
