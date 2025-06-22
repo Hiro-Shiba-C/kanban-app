@@ -1,24 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kanban Board Application
 
-## Getting Started
+A modern, feature-rich kanban board application built with Next.js 15, React 19, and TypeScript. Manage your tasks efficiently with drag-and-drop functionality, priority settings, and overdue task tracking.
 
-First, run the development server:
+## ✨ Features
+
+### 📋 Board Management
+- Create custom kanban boards with titles and descriptions
+- Automatic default column generation (To Do, In Progress, Done)
+- Individual board pages with persistent URLs
+
+### 🎯 Task Management
+- Create tasks with titles, descriptions, priorities, and due dates
+- Priority levels: Low, Medium, High, Urgent with color coding
+- Optional due date selection with date picker
+
+### 🖱️ Drag & Drop
+- Seamlessly move tasks between columns
+- Reorder tasks within the same column
+- Optimistic updates with error rollback
+- Visual feedback during drag operations
+
+### ⚠️ Overdue Task Tracking
+- Visual highlighting of overdue tasks with red borders
+- Warning icons and relative time display ("3日前に期限切れ")
+- Column header badges showing overdue task counts
+
+## 🚀 Getting Started
+
+First, install dependencies and run the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 15 with App Router
+- **Frontend**: React 19, TypeScript
+- **Styling**: Tailwind CSS v4
+- **Drag & Drop**: @dnd-kit
+- **Icons**: Lucide React
+- **Data Storage**: JSON files with Server Actions
+- **Deployment**: Ready for Vercel deployment
 
 ## Learn More
 

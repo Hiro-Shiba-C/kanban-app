@@ -1,0 +1,206 @@
+import { Board, Column, Card } from './types';
+import { promises as fs } from 'fs';
+import path from 'path';
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const BOARDS_FILE = path.join(DATA_DIR, 'boards.json');
+const COLUMNS_FILE = path.join(DATA_DIR, 'columns.json');
+const CARDS_FILE = path.join(DATA_DIR, 'cards.json');
+
+async function ensureDataDir() {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+  } catch {
+    // Directory already exists
+  }
+}
+
+async function readJsonFile<T>(filePath: string): Promise<T[]> {
+  try {
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+async function writeJsonFile<T>(filePath: string, data: T[]): Promise<void> {
+  await ensureDataDir();
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+}
+
+export async function getBoards(): Promise<Board[]> {
+  return readJsonFile<Board>(BOARDS_FILE);
+}
+
+export async function getBoardById(id: string): Promise<Board | null> {
+  const boards = await getBoards();
+  return boards.find(board => board.id === id) || null;
+}
+
+export async function createBoard(board: Omit<Board, 'id' | 'createdAt'>): Promise<Board> {
+  try {
+    await ensureDataDir();
+    const boards = await getBoards();
+    const newBoard: Board = {
+      ...board,
+      id: generateId(),
+      createdAt: new Date(),
+    };
+    
+    boards.push(newBoard);
+    await writeJsonFile(BOARDS_FILE, boards);
+    
+    return newBoard;
+  } catch (error) {
+    console.error('Error in createBoard:', error);
+    throw error;
+  }
+}
+
+export async function getColumnsByBoardId(boardId: string): Promise<Column[]> {
+  const columns = await readJsonFile<Column>(COLUMNS_FILE);
+  return columns.filter(column => column.boardId === boardId).sort((a, b) => a.order - b.order);
+}
+
+export async function createColumn(column: Omit<Column, 'id'>): Promise<Column> {
+  try {
+    await ensureDataDir();
+    const columns = await readJsonFile<Column>(COLUMNS_FILE);
+    const newColumn: Column = {
+      ...column,
+      id: generateId(),
+    };
+    
+    columns.push(newColumn);
+    await writeJsonFile(COLUMNS_FILE, columns);
+    
+    return newColumn;
+  } catch (error) {
+    console.error('Error in createColumn:', error);
+    throw error;
+  }
+}
+
+export async function createDefaultColumns(boardId: string): Promise<Column[]> {
+  const defaultColumns = [
+    { title: 'To Do', boardId, order: 0 },
+    { title: 'In Progress', boardId, order: 1 },
+    { title: 'Done', boardId, order: 2 },
+  ];
+  
+  const columns = [];
+  for (const columnData of defaultColumns) {
+    const column = await createColumn(columnData);
+    columns.push(column);
+  }
+  
+  return columns;
+}
+
+export async function getCardsByColumnId(columnId: string): Promise<Card[]> {
+  const cards = await readJsonFile<Card>(CARDS_FILE);
+  return cards.filter(card => card.columnId === columnId).sort((a, b) => a.order - b.order);
+}
+
+export async function createCard(card: Omit<Card, 'id' | 'createdAt' | 'order'>): Promise<Card> {
+  try {
+    await ensureDataDir();
+    const cards = await readJsonFile<Card>(CARDS_FILE);
+    
+    // 同じカラム内のカードの最大order値を取得
+    const columnCards = cards.filter(c => c.columnId === card.columnId);
+    const maxOrder = columnCards.length > 0 ? Math.max(...columnCards.map(c => c.order)) : -1;
+    
+    const newCard: Card = {
+      ...card,
+      id: generateId(),
+      order: maxOrder + 1,
+      createdAt: new Date(),
+    };
+    
+    cards.push(newCard);
+    await writeJsonFile(CARDS_FILE, cards);
+    
+    return newCard;
+  } catch (error) {
+    console.error('Error in createCard:', error);
+    throw error;
+  }
+}
+
+export async function updateCardPosition(cardId: string, newColumnId: string, newOrder: number): Promise<void> {
+  try {
+    await ensureDataDir();
+    const cards = await readJsonFile<Card>(CARDS_FILE);
+    
+    const cardIndex = cards.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) {
+      throw new Error('Card not found');
+    }
+    
+    const card = cards[cardIndex];
+    const oldColumnId = card.columnId;
+    
+    // カードの位置を更新
+    cards[cardIndex] = {
+      ...card,
+      columnId: newColumnId,
+      order: newOrder,
+    };
+    
+    // 同じカラム内の他のカードのorder値を調整
+    if (oldColumnId === newColumnId) {
+      // 同じカラム内での並び替え
+      reorderCardsInSameColumn(cards, newColumnId, cardId, newOrder);
+    } else {
+      // 異なるカラム間での移動
+      reorderCardsAfterMove(cards, oldColumnId, newColumnId, cardId, newOrder);
+    }
+    
+    await writeJsonFile(CARDS_FILE, cards);
+  } catch (error) {
+    console.error('Error in updateCardPosition:', error);
+    throw error;
+  }
+}
+
+function reorderCardsInSameColumn(cards: Card[], columnId: string, movedCardId: string, newOrder: number): void {
+  const columnCards = cards.filter(c => c.columnId === columnId);
+  const otherCards = columnCards.filter(c => c.id !== movedCardId);
+  
+  // 新しい位置以降のカードのorder値を調整
+  otherCards.forEach(card => {
+    const cardIndex = cards.findIndex(c => c.id === card.id);
+    if (card.order >= newOrder) {
+      cards[cardIndex].order = card.order + 1;
+    }
+  });
+}
+
+function reorderCardsAfterMove(cards: Card[], oldColumnId: string, newColumnId: string, movedCardId: string, newOrder: number): void {
+  // 元のカラムのカードのorder値を詰める
+  const oldColumnCards = cards.filter(c => c.columnId === oldColumnId && c.id !== movedCardId);
+  oldColumnCards.sort((a, b) => a.order - b.order);
+  oldColumnCards.forEach((card, index) => {
+    const cardIndex = cards.findIndex(c => c.id === card.id);
+    cards[cardIndex].order = index;
+  });
+  
+  // 新しいカラムのカードのorder値を調整
+  const newColumnCards = cards.filter(c => c.columnId === newColumnId && c.id !== movedCardId);
+  newColumnCards.forEach(card => {
+    const cardIndex = cards.findIndex(c => c.id === card.id);
+    if (card.order >= newOrder) {
+      cards[cardIndex].order = card.order + 1;
+    }
+  });
+}
+
+export async function getAllCards(): Promise<Card[]> {
+  return readJsonFile<Card>(CARDS_FILE);
+}
+
+function generateId(): string {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
